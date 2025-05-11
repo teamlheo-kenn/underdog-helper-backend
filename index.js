@@ -1,18 +1,12 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-
-dotenv.config();
-const app = express();
-app.use(cors());
-
 app.get('/api/picks', async (req, res) => {
   try {
-    const response = await fetch(
-      `https://api.the-odds-api.com/v4/sports/basketball_nba/odds?regions=us&markets=player_points&apiKey=${process.env.ODDS_API_KEY}`
-    );
+    const response = await fetch(`https://api.the-odds-api.com/v4/sports/basketball_nba/odds?regions=us&markets=player_points&apiKey=${process.env.ODDS_API_KEY}`);
     const data = await response.json();
+
+    if (!Array.isArray(data)) {
+      console.error("Bad API response:", data);
+      return res.status(500).json({ error: "Odds API returned invalid data" });
+    }
 
     const parsedPicks = data
       .flatMap(game => game.bookmakers || [])
@@ -29,10 +23,7 @@ app.get('/api/picks', async (req, res) => {
 
     res.json(parsedPicks);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch picks' });
+    console.error("Fetch failed:", err);
+    res.status(500).json({ error: "Failed to fetch picks" });
   }
 });
-
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
