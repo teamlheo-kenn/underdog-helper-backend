@@ -7,39 +7,39 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Root route to prevent "Cannot GET /"
+// Root route – avoids "Cannot GET /"
 app.get('/', (req, res) => {
-  res.send('🏀 Underdog Helper Backend is running!');
+  res.send('🏀 Underdog Helper Backend is live!');
 });
 
-// NBA Player Stats Route
+// Player stats route – uses RapidAPI
 app.get('/api/player-stats', async (req, res) => {
-  const url = 'https://api-nba-v1.p.rapidapi.com/players/statistics?game=8133';
-
-  const options = {
-    method: 'GET',
-    headers: {
-      'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-      'X-RapidAPI-Host': 'api-nba-v1.p.rapidapi.com'
-    }
-  };
-
   try {
+    const url = 'https://api-nba-v1.p.rapidapi.com/players/statistics?game=8133';
+
+    const options = {
+      method: 'GET',
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+        'X-RapidAPI-Host': 'api-nba-v1.p.rapidapi.com',
+      },
+    };
+
     const response = await fetch(url, options);
     const data = await response.json();
 
+    // Optional: Check data format before sending
     if (!data || !data.response) {
-      console.error('Invalid response:', data);
-      return res.status(500).json({ error: 'Failed to fetch player stats' });
+      return res.status(500).json({ error: 'Invalid response from NBA API' });
     }
 
-    res.json({ stats: data.response });
+    res.json({ players: data.response });
   } catch (error) {
-    console.error('Fetch error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Fetch error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch player stats' });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
